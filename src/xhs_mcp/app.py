@@ -135,6 +135,29 @@ async def get_note_comments(url: str) -> str:
         await tools.cleanup()
 
 
+@mcp.tool(name="publish_note")
+async def publish_note(files: list[str], title: str = "", content: str = "") -> str:
+    """
+    发布小红书笔记 (上传图片并发布)
+    
+    Args:
+        files: 图片文件路径列表 (绝对路径)
+        title: 笔记标题
+        content: 笔记正文
+        
+    Returns:
+        str: 发布结果消息
+    """
+    await logger.ainfo(f"Publish note tool called with {len(files)} files, title: {title}")
+    tools = RedNoteTools()
+    try:
+        result = await tools.publish_note(files, title, content)
+        return result
+    except Exception as e:
+        await logger.aerror(f"Publish note failed: {e}")
+        # Cleanup on failure
+        await tools.cleanup()
+        return f"Publish note failed: {str(e)}"
 
 @click.command()
 def serve():

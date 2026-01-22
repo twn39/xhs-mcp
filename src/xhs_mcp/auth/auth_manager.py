@@ -23,10 +23,8 @@ class AuthManager:
             
             # Create directories if they don't exist
             if not mcp_dir.exists():
-                # logger.debug(f"Creating directory: {mcp_dir}")
                 mcp_dir.mkdir()
             if not xhs_dir.exists():
-                # logger.debug(f"Creating directory: {xhs_dir}")
                 xhs_dir.mkdir()
                 
             cookie_path = str(xhs_dir / "cookies.json")

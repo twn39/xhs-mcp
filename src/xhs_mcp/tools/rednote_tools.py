@@ -354,3 +354,103 @@ class RedNoteTools:
             raise e
         finally:
             await self.cleanup()
+
+    async def publish_note(self, files: List[str], title: str = "", content: str = "") -> str:
+        try:
+            await self.initialize()
+            if not self.page:
+                raise Exception("Page not initialized")
+
+            # Navigate to publish page
+            publish_url = "https://creator.xiaohongshu.com/publish/publish?source=official&from=tab_switch&target=image"
+            await logger.ainfo(f"Navigating to {publish_url}")
+            await self.page.goto(publish_url)
+            
+            # Wait for upload input
+            await logger.ainfo("Waiting for upload input")
+            upload_input_selector = "input.upload-input"
+            try:
+                await self.page.wait_for_selector(upload_input_selector, state="attached", timeout=30000)
+            except Exception:
+                await logger.aerror("Upload input not found")
+                raise Exception("Upload input not found. Please ensure you are logged in.")
+
+            await self.page.locator(upload_input_selector).set_input_files(files)
+
+            img_container_selector = ".img-upload-area .img-container"
+            try:
+                await self.page.wait_for_selector(img_container_selector, state="visible", timeout=60000)
+
+                if len(files) > 1:
+                     await self.page.wait_for_function(
+                        f"document.querySelectorAll('{img_container_selector}').length === {len(files)}",
+                        timeout=60000
+                    )
+                await logger.ainfo(f"Confirmed {len(files)} images uploaded and visible")
+            except Exception as e:
+                await logger.awarn(f"Timeout waiting for image previews: {e}. Proceeding anyway...")
+
+            title_selector = "input.d-text[placeholder*='标题']"
+            
+            try:
+                await self.page.wait_for_selector(title_selector, state="visible", timeout=60000)
+            except Exception:
+                # Fallback to just .d-text if placeholder differs
+                title_selector = "input.d-text"
+                await self.page.wait_for_selector(title_selector, state="visible", timeout=10000)
+
+            # 1. Fill Title
+            if title:
+                await logger.ainfo(f"Filling title: {title}")
+                await self.page.click(title_selector)
+                await self.page.fill(title_selector, title)
+                await self.random_delay(0.5, 1.0)
+            
+            # 2. Fill Content
+            if content:
+                await logger.ainfo("Filling content")
+                content_selector = ".tiptap.ProseMirror"
+                await self.page.click(content_selector)
+                await self.page.fill(content_selector, content)
+                await self.random_delay(0.5, 1.0)
+            
+            # Wait 2 seconds before publishing as requested
+            await logger.ainfo("Waiting 2s before publishing...")
+            await asyncio.sleep(2)
+                
+            # 3. Click Publish with Retry Logic
+            # Retry clicking publish every 2s until success or timeout
+            publish_btn_selector = ".publishBtn"
+            success_selector = ".success-container"
+            
+            max_retries = 30 # 30 * 2 = 60 seconds max wait
+            for i in range(max_retries):
+                try:
+                    await logger.ainfo(f"Clicking publish button (Attempt {i+1}/{max_retries})")
+                    await self.page.click(publish_btn_selector)
+                    
+                    # Check for success immediately with short timeout (2s)
+                    try:
+                        await self.page.wait_for_selector(success_selector, state="visible", timeout=2000)
+                        
+                        # Verify text
+                        success_text = await self.page.text_content(success_selector)
+                        if "发布成功" in success_text:
+                            await logger.ainfo("Publish verified successfully")
+                            return "Note published successfully (Verified '发布成功')."
+                    except Exception:
+                        # Success not found yet
+                        pass
+                    
+                except Exception as e:
+                    await logger.awarn(f"Publish attempt {i+1} failed (click error?): {e}")
+                    await asyncio.sleep(2)
+            
+            return "Publish timed out after multiple attempts. Please check browser."
+
+        except Exception as e:
+            await logger.aerror(f"Error publishing note: {e}")
+            raise e
+        finally:
+            await self.cleanup()
+
