@@ -10,13 +10,17 @@ logger = get_logger(__name__)
 
 mcp = FastMCP("RedNote MCP Server")
 
-@mcp.tool(name="search_notes", description="根据关键词搜索笔记")
+@mcp.tool(name="search_notes")
 async def search_notes(keywords: str, limit: int = 10) -> str:
     """
-    Search notes by keywords.
+    根据关键词搜索小红书笔记
+    
     Args:
-        keywords: Search keywords
-        limit: Max number of results (default 10)
+        keywords: 搜索关键词
+        limit: 返回结果数量限制 (默认为 10)
+        
+    Returns:
+        str: 格式化后的笔记列表，包含标题、作者、内容摘要、互动数据等
     """
     await logger.ainfo(f"Searching notes with keywords: {keywords}, limit: {limit}")
     try:
@@ -42,11 +46,18 @@ async def search_notes(keywords: str, limit: int = 10) -> str:
         await logger.aerror(f"Error searching notes: {e}")
         raise Exception(str(e))
 
-@mcp.tool(name="login", description="Login to Xiaohongshu account")
+@mcp.tool(name="login")
 async def login_tool() -> str:
     """
-    Login to Xiaohongshu account to save cookies.
-    This will open a browser window for you to scan the QR code.
+    登录小红书账号并保存 Cookie
+    
+    功能:
+        启动浏览器打开小红书主页
+        等待用户扫码登录
+        登录成功后自动保存 Cookie 到本地
+        
+    Returns:
+        str: 登录结果消息
     """
     await logger.ainfo("Starting login process via tool")
     auth_manager = AuthManager()
@@ -59,12 +70,16 @@ async def login_tool() -> str:
         await auth_manager.cleanup()
         raise Exception(str(e))  # Re-raise stringified error for MCP tool
 
-@mcp.tool(name="get_note_content", description="根据链接获取笔记详情")
+@mcp.tool(name="get_note_content")
 async def get_note_content(url: str) -> str:
     """
-    Get note content by URL.
+    获取小红书笔记详细内容
+    
     Args:
-        url: Note URL
+        url: 笔记链接
+        
+    Returns:
+        str: 笔记详情，包含标题、全文、标签、所有互动数据等
     """
     await logger.ainfo(f"Get note content tool called with url: {url}")
     tools = RedNoteTools()
@@ -87,12 +102,16 @@ async def get_note_content(url: str) -> str:
     finally:
         await tools.cleanup()
 
-@mcp.tool(name="get_note_comments", description="根据链接获取笔记评论")
+@mcp.tool(name="get_note_comments")
 async def get_note_comments(url: str) -> str:
     """
-    Get note comments by URL.
+    获取小红书笔记评论列表
+    
     Args:
-        url: Note URL
+        url: 笔记链接
+        
+    Returns:
+        str: 评论列表，包含评论用户、内容、点赞数、时间等信息
     """
     await logger.ainfo(f"Get note comments tool called with url: {url}")
     tools = RedNoteTools()
