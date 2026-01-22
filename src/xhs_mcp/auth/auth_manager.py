@@ -10,7 +10,6 @@ logger = get_logger(__name__)
 
 class AuthManager:
     def __init__(self, cookie_path: Optional[str] = None):
-        # logger.debug("Initializing AuthManager")
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
         self.page: Optional[Page] = None
@@ -32,7 +31,6 @@ class AuthManager:
                 
             cookie_path = str(xhs_dir / "cookies.json")
 
-        # logger.debug(f"Using cookie path: {cookie_path}")
         self.cookie_manager = CookieManager(cookie_path)
 
     async def login(self, timeout_seconds: int = 10) -> None:
@@ -42,7 +40,6 @@ class AuthManager:
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=False,
-            # timeout is not a direct arg for launch in python, handled in context/page or default navigation
         )
         
         if not self.browser:
