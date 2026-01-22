@@ -1,0 +1,32 @@
+[project]
+name = "xhs-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "curry tang", email = "curry_tang@apple.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.1",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.25.0",
+    "playwright>=1.57.0",
+    "structlog>=25.1.0",
+    "orjson>=3.9.15",
+    "aiofiles>=25.1.0",
+]
+
+[project.scripts]
+xhs-mcp = "xhs_mcp.app:serve"
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pip>=25.3",
+    "ruff>=0.14.13",
+    "ty>=0.0.13",
+]
